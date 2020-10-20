@@ -106,7 +106,7 @@ disqusShortname = ""
     [[params.tiles.showcase]]
       title = "Blockbusters"
       subtitle = "Do some directors achieve better IMDB ratings than others? "
-      image = "pic03.jpg"
+      image = "Director_image.jpg"
       url = "projects/blockbusters"
 
     [[params.tiles.showcase]]
