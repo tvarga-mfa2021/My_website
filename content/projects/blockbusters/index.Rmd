@@ -1,0 +1,297 @@
+---
+title: 'Session 6: Homework 3'
+author: "Group B30"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    theme: flatly
+    highlight: zenburn
+    number_sections: yes
+    toc: yes
+    toc_float: yes
+    code_folding: show
+  pdf_document:
+    toc: yes
+---
+
+
+```{r, setup, echo=FALSE}
+knitr::opts_chunk$set(
+  message = FALSE, 
+  warning = FALSE, 
+  tidy=FALSE,     # display code as typed
+  size="small")   # slightly smaller font for code
+options(digits = 3)
+
+# default figure size
+knitr::opts_chunk$set(
+  fig.width=6.75, 
+  fig.height=6.75,
+  fig.align = "center"
+)
+```
+
+
+```{r load-libraries, echo=FALSE}
+library(tidyverse)  # Load ggplot2, dplyr, and all the other tidyverse packages
+library(mosaic)
+library(ggthemes)
+library(GGally)
+library(readxl)
+library(here)
+library(skimr)
+library(janitor)
+library(broom)
+library(tidyquant)
+library(infer)
+library(openintro)
+library(tidyquant)
+library(scales)
+```
+
+# Blockbusters
+## Rating differences among directors
+
+Recall the IMBD ratings data. In this section we explore whether the mean IMDB rating for Steven Spielberg and Tim Burton are the same or not.
+
+We load the data and examine its structure
+
+```{r load-movies-data}
+#we examine the data
+movies <- read_csv(here::here("content", "projects", "blockbusters", "movies.csv"))
+glimpse(movies)
+```
+
+Your R code and analysis should go here. If you want to insert a blank chunk of R code you can just hit `Ctrl/Cmd+Alt+I` 
+
+```{r}
+#we check whether there are any duplicate entries
+skim(movies)
+
+#there are fewer unique titles than rows, so we need to take rid of duplicate entries 
+movies_cleaned <-movies %>% 
+  distinct(title, .keep_all = TRUE) 
+
+#we check the dataset again, to see whether issue has been corrected
+skim(movies_cleaned)
+```
+
+```{r}
+
+
+#we create a new data set creating only useful rows of the two directors studied
+useful_movies<-movies_cleaned %>%
+  filter((director=="Steven Spielberg")|(director=="Tim Burton"))
+
+#we use only useful data
+director_confidence_interval<-useful_movies %>%
+#thanks to previously filtering data we can group_by director to get useful output for both directors  
+  group_by(director)%>%
+  summarise(movies=n(),
+            mean=mean(rating,na.rm=TRUE),
+            sd=sd(rating, na.rm=TRUE),
+            lower=mean-abs(qt(0.025,(movies-1)))*(sd/sqrt(movies)),
+            higher=mean+abs(qt(0.025,(movies-1)))*(sd/sqrt(movies)))
+
+director_confidence_interval
+NULL
+```
+
+```{r, out.width="100%"}
+#using table with calculations, setting order
+ggplot(director_confidence_interval, aes(x=mean, y=reorder(director,mean), colour=director))+
+   
+  #plot mean
+  geom_point(aes(size=1.4))+
+  
+  #plot confidence interval around mean
+  geom_errorbarh(aes(xmax=higher, xmin=lower),
+                     # setting width of whiskers and thickness of line
+                     width=0.08, size=1.5)+
+  
+  #adding shaded overlap
+  geom_rect(aes(xmin=7.27, xmax=7.46, ymin=-Inf, ymax=Inf), color=NA, alpha=0.2)+
+  
+  #set up titles and axes
+  labs(title="Do Spielberg and Burton have the same mean IMDB rating?", subtitle="95% confidence intervals overlap", x= "Mean IMDB Rating", y= "" )+
+  
+  #remove legend
+  theme(legend.position="none")+
+  
+  #setting background
+  theme(strip.background = element_rect(
+     color="black", fill="white", linetype="solid"), panel.background = element_rect(fill = "white"),panel.grid=element_line(size=0.5, colour="#F1F1EB"), panel.border = element_rect(fill=NA))+
+  
+  #placing labels, adjusting decimal place, size, position and colour
+  geom_text(aes(label=round(mean, digits = 2)), size=7.5, nudge_y=0.09, colour="black")+
+  geom_text(aes(label=round(lower, digits = 2)), hjust=c(4.5,6), vjust=-1, colour="black") +
+  geom_text(aes(label=round(higher, digits = 2)),hjust=c(-3.5,-5), vjust=-1, colour="black") 
+```
+
+We run hypothesis tests using both the `t.test` command and the `infer` package to simulate from a null distribution, where we assume zero difference between the two. For this we must first check whether the ratings of the two directors have equal variances.
+
+```{r}
+
+#first we need to check whether two groups have equal variance
+rating_variance_comparison <- bartlett.test(rating ~ director, 
+        data = useful_movies)
+rating_variance_comparison
+```
+The p-value of 0.9 means that we cannot reject the null hypothesis of equal means and can therefore continue with hypothesis tests.
+
+```{r}
+
+# Getting p-value using t.test:
+
+t.test(rating~director, data=useful_movies)
+
+
+# Getting p-value using infer:
+
+# We randomize
+set.seed(5648)
+
+ratings_in_null_world<-useful_movies %>%
+  
+# Specify the variable of interest
+specify(rating~director) %>%
+  
+# Hypothesize a null of no (or zero) difference
+hypothesize(null = "independence") %>%
+  
+# Generate a bunch of simulated samples
+generate(reps=1000 , type ="permute")%>%
+  
+# Find the mean difference of each sample
+calculate(stat = "diff in means",
+          order = c("Steven Spielberg", "Tim Burton"))
+
+
+#visualize how extreme would the observed results be if we simulate a hypothesized population
+ratings_in_null_world %>% visualize()+
+   shade_p_value(obs_stat =0.52, direction = "both")
+
+
+#Calculate a p-value
+ratings_in_null_world %>%
+  get_pvalue(obs_stat=0.52, direction = "both")
+```
+Before anything, we write down the null and alternative hypotheses, as well as the resulting test statistic and the associated t-stat or p-value.
+
+>Answer:
+Critical p-value = 0.05
+Null hypothesis: Spielberg mean IMBD rating - Burton mean IMBD rating = 0 ; p-value is equal to or greater than 0.05
+Alternative hypothesis: Difference != 0 ; p-vlaue is smaller than 0.05
+p-stat using t.test= 0.04
+p-stat using simulated null distribution= 0.054
+
+At the end of the day, what do you conclude?
+
+>Conclusion
+We can see that the observed difference of 0.52 is extreme on the simulatio-based null distribution. We can also see that under the 95% confidence interval for the difference, 0.0351 to 1.0127 does not include zero. The infer test and t.test give p-values of 0.028 and 0.04 respectively. There is a 2.8% probabilty that our randomly generated samples from a population with mean difference zero would produce the observed difference. There is a 4% chance of encountering the observed difference if the true difference was zero. Both these p-values are smaller than the 0.05 critical p-value. At the 95% confidence level We can therefore reject the null hypothesis of Spielberg and Burton having same ratings. Given that out observed difference is positive, we can also conclude with 95% confidence that Spielberg has higher ratings than Burton.
+
+## Which directors achieve greatest returns?
+Sure, movie ratings may be interesting, but I believe that what matters most to studios is how much money a movie can generate relative to its budget. Let's look at which directors generate the most consistent returns.
+
+```{r}
+
+#creating new variable return_on_budget
+movies_cleaned <- movies_cleaned %>%
+  mutate(
+    return_on_budget = ((gross-budget)/budget)
+    )
+```
+
+Studios are probably risk averse and will want a director who has proved themselves, we therefore filter for directors who have at least 8 movies in the dataset.
+
+```{r}
+
+director10 <- movies_cleaned %>% 
+  group_by(director) %>% 
+  summarise(
+    N = n()
+  ) %>% 
+  filter(
+    N >= 10
+  )
+
+director10_movies <- movies_cleaned %>% 
+  filter(
+    director %in% director10$director
+  )
+
+```
+
+We create confidence intervals for directors
+```{r}
+  
+#we use only useful data
+director_returns_confidence_interval<-director10_movies %>%
+#thanks to previously filtering data we can group_by director to get useful output for both directors  
+  group_by(director) %>%
+  summarise(movies=n(),
+            mean = mean(return_on_budget,na.rm=TRUE),
+            sd=sd(return_on_budget, na.rm=TRUE),
+            lower=mean-abs(qt(0.025,(movies-1)))*(sd/sqrt(movies)),
+            higher=mean+abs(qt(0.025,(movies-1)))*(sd/sqrt(movies)))
+
+director_returns_confidence_interval
+
+```
+```{r}
+#using table with calculations, setting order
+ggplot(director_returns_confidence_interval, aes(x=mean, y=reorder(director,mean), colour=director))+
+   
+  #plot mean
+  geom_point(aes(size=1.4))+
+  
+  #plot confidence interval around mean
+  geom_errorbarh(aes(xmax=higher, xmin=lower),
+                     # setting width of whiskers and thickness of line
+                     width=0.08, size=1.5)+
+  
+  
+  #set up titles and axes
+  labs(title="Which director delivers the highest and safest return?", subtitle="95% confidence intervals for director returns", x= "Return on budget", y= "" )+
+  
+  #remove legend
+  theme(legend.position="none")
+
+#Let's create another graph excluding Robert Rodriquez, clearly there might be some problem with data or he's too risky
+director_returns_without_Rodrigues<-director_returns_confidence_interval%>%
+  filter(director!="Robert Rodriguez")
+
+ggplot(director_returns_without_Rodrigues, aes(x=mean, y=reorder(director,mean), colour=director))+
+   
+  #plot mean
+  geom_point(aes(size=1.4))+
+  
+  #plot confidence interval around mean
+  geom_errorbarh(aes(xmax=higher, xmin=lower),
+                     # setting width of whiskers and thickness of line
+                     width=0.08, size=1.5)+
+  
+  
+  #set up titles and axes
+  labs(title="Which director delivers the highest and safest return?", subtitle="95% confidence intervals for director returns", x= "Return on budget", y= "" )+
+  
+  #remove legend
+  theme(legend.position="none")
+```
+
+It is very interesting to see how the return on budget of directors behaves similarly as securities in an efficient financial market, the greater the risk, the greater the expected reward. It's almost like the directors with high expected average returns direct movies in a way that people either love it or hate it.
+
+This does not help studios to make decisions easily. Let's calculate "Sharpe ratios" for directors to help them.
+```{r}
+
+director_returns_confidence_interval <- director_returns_confidence_interval%>%
+  mutate(Sharpe_Ratio=mean/sd)
+  
+ggplot(director_returns_confidence_interval, aes(x=Sharpe_Ratio, y=reorder(director,Sharpe_Ratio)))+
+  geom_col()+
+  labs(title="Sharpe ratios of Directors",
+       x="Sharpe Ratio",
+       y="")
+```
+As we can see, risk averse studios should look for Shawn Levy or Michael Bay for directinf their movies. Of course, only if the dataset is correct, which is questionable given the negative Sharpe Ratio of Ridley Scott who had some AMAZING movies, which surely on average were profitable. 
+

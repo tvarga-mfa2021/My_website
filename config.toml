@@ -107,7 +107,7 @@ disqusShortname = ""
       title = "Blockbusters"
       subtitle = "Do some directors achieve better IMDB ratings than others? "
       image = "pic03.jpg"
-      url = "blogs/magna"
+      url = "projects/blockbusters"
 
     [[params.tiles.showcase]]
       title = "Happiness globally"
@@ -179,20 +179,6 @@ disqusShortname = ""
     copyright = "Company Name"
 
     # Uses font awesome icons
-    [[params.footer.social]]
-      icon = "fa-twitter"
-      url= "https://www.twitter.com"
-      label = "Twitter"
-
-    [[params.footer.social]]
-      icon = "fa-facebook"
-      url= "https://www.facebook.com"
-      label = "Facebook"
-
-    [[params.footer.social]]
-      icon = "fa-instagram"
-      url= "https://www.instagram.com"
-      label = "Instagram"
     
     [[params.footer.social]]
       icon = "fa-github"

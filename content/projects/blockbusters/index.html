@@ -1,0 +1,723 @@
+---
+title: 'Session 6: Homework 3'
+author: "Group B30"
+date: "2020-10-20"
+output:
+  html_document:
+    theme: flatly
+    highlight: zenburn
+    number_sections: yes
+    toc: yes
+    toc_float: yes
+    code_folding: show
+  pdf_document:
+    toc: yes
+---
+
+
+
+<div id="blockbusters" class="section level1">
+<h1>Blockbusters</h1>
+<div id="rating-differences-among-directors" class="section level2">
+<h2>Rating differences among directors</h2>
+<p>Recall the IMBD ratings data. In this section we explore whether the mean IMDB rating for Steven Spielberg and Tim Burton are the same or not.</p>
+<p>We load the data and examine its structure</p>
+<pre class="r"><code>#we examine the data
+movies &lt;- read_csv(here::here(&quot;content&quot;, &quot;projects&quot;, &quot;blockbusters&quot;, &quot;movies.csv&quot;))
+glimpse(movies)</code></pre>
+<pre><code>## Rows: 2,961
+## Columns: 11
+## $ title               &lt;chr&gt; &quot;Avatar&quot;, &quot;Titanic&quot;, &quot;Jurassic World&quot;, &quot;The Ave...
+## $ genre               &lt;chr&gt; &quot;Action&quot;, &quot;Drama&quot;, &quot;Action&quot;, &quot;Action&quot;, &quot;Action&quot;...
+## $ director            &lt;chr&gt; &quot;James Cameron&quot;, &quot;James Cameron&quot;, &quot;Colin Trevor...
+## $ year                &lt;dbl&gt; 2009, 1997, 2015, 2012, 2008, 1999, 1977, 2015,...
+## $ duration            &lt;dbl&gt; 178, 194, 124, 173, 152, 136, 125, 141, 164, 93...
+## $ gross               &lt;dbl&gt; 7.61e+08, 6.59e+08, 6.52e+08, 6.23e+08, 5.33e+0...
+## $ budget              &lt;dbl&gt; 2.37e+08, 2.00e+08, 1.50e+08, 2.20e+08, 1.85e+0...
+## $ cast_facebook_likes &lt;dbl&gt; 4834, 45223, 8458, 87697, 57802, 37723, 13485, ...
+## $ votes               &lt;dbl&gt; 886204, 793059, 418214, 995415, 1676169, 534658...
+## $ reviews             &lt;dbl&gt; 3777, 2843, 1934, 2425, 5312, 3917, 1752, 1752,...
+## $ rating              &lt;dbl&gt; 7.9, 7.7, 7.0, 8.1, 9.0, 6.5, 8.7, 7.5, 8.5, 7....</code></pre>
+<p>Your R code and analysis should go here. If you want to insert a blank chunk of R code you can just hit <code>Ctrl/Cmd+Alt+I</code></p>
+<pre class="r"><code>#we check whether there are any duplicate entries
+skim(movies)</code></pre>
+<table>
+<caption><span id="tab:unnamed-chunk-1">Table 1: </span>Data summary</caption>
+<tbody>
+<tr class="odd">
+<td align="left">Name</td>
+<td align="left">movies</td>
+</tr>
+<tr class="even">
+<td align="left">Number of rows</td>
+<td align="left">2961</td>
+</tr>
+<tr class="odd">
+<td align="left">Number of columns</td>
+<td align="left">11</td>
+</tr>
+<tr class="even">
+<td align="left">_______________________</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">Column type frequency:</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">character</td>
+<td align="left">3</td>
+</tr>
+<tr class="odd">
+<td align="left">numeric</td>
+<td align="left">8</td>
+</tr>
+<tr class="even">
+<td align="left">________________________</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">Group variables</td>
+<td align="left">None</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Variable type: character</strong></p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">skim_variable</th>
+<th align="right">n_missing</th>
+<th align="right">complete_rate</th>
+<th align="right">min</th>
+<th align="right">max</th>
+<th align="right">empty</th>
+<th align="right">n_unique</th>
+<th align="right">whitespace</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">title</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">83</td>
+<td align="right">0</td>
+<td align="right">2907</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">genre</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">5</td>
+<td align="right">11</td>
+<td align="right">0</td>
+<td align="right">17</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">director</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">3</td>
+<td align="right">32</td>
+<td align="right">0</td>
+<td align="right">1366</td>
+<td align="right">0</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Variable type: numeric</strong></p>
+<table>
+<colgroup>
+<col width="13%" />
+<col width="6%" />
+<col width="9%" />
+<col width="6%" />
+<col width="6%" />
+<col width="4%" />
+<col width="6%" />
+<col width="6%" />
+<col width="6%" />
+<col width="6%" />
+<col width="28%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">skim_variable</th>
+<th align="right">n_missing</th>
+<th align="right">complete_rate</th>
+<th align="right">mean</th>
+<th align="right">sd</th>
+<th align="right">p0</th>
+<th align="right">p25</th>
+<th align="right">p50</th>
+<th align="right">p75</th>
+<th align="right">p100</th>
+<th align="left">hist</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">year</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">2.00e+03</td>
+<td align="right">9.95e+00</td>
+<td align="right">1920.0</td>
+<td align="right">2.00e+03</td>
+<td align="right">2.00e+03</td>
+<td align="right">2.01e+03</td>
+<td align="right">2.02e+03</td>
+<td align="left">▁▁▁▂▇</td>
+</tr>
+<tr class="even">
+<td align="left">duration</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">1.10e+02</td>
+<td align="right">2.22e+01</td>
+<td align="right">37.0</td>
+<td align="right">9.50e+01</td>
+<td align="right">1.06e+02</td>
+<td align="right">1.19e+02</td>
+<td align="right">3.30e+02</td>
+<td align="left">▃▇▁▁▁</td>
+</tr>
+<tr class="odd">
+<td align="left">gross</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">5.81e+07</td>
+<td align="right">7.25e+07</td>
+<td align="right">703.0</td>
+<td align="right">1.23e+07</td>
+<td align="right">3.47e+07</td>
+<td align="right">7.56e+07</td>
+<td align="right">7.61e+08</td>
+<td align="left">▇▁▁▁▁</td>
+</tr>
+<tr class="even">
+<td align="left">budget</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">4.06e+07</td>
+<td align="right">4.37e+07</td>
+<td align="right">218.0</td>
+<td align="right">1.10e+07</td>
+<td align="right">2.60e+07</td>
+<td align="right">5.50e+07</td>
+<td align="right">3.00e+08</td>
+<td align="left">▇▂▁▁▁</td>
+</tr>
+<tr class="odd">
+<td align="left">cast_facebook_likes</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">1.24e+04</td>
+<td align="right">2.05e+04</td>
+<td align="right">0.0</td>
+<td align="right">2.24e+03</td>
+<td align="right">4.60e+03</td>
+<td align="right">1.69e+04</td>
+<td align="right">6.57e+05</td>
+<td align="left">▇▁▁▁▁</td>
+</tr>
+<tr class="even">
+<td align="left">votes</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">1.09e+05</td>
+<td align="right">1.58e+05</td>
+<td align="right">5.0</td>
+<td align="right">1.99e+04</td>
+<td align="right">5.57e+04</td>
+<td align="right">1.33e+05</td>
+<td align="right">1.69e+06</td>
+<td align="left">▇▁▁▁▁</td>
+</tr>
+<tr class="odd">
+<td align="left">reviews</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">5.03e+02</td>
+<td align="right">4.94e+02</td>
+<td align="right">2.0</td>
+<td align="right">1.99e+02</td>
+<td align="right">3.64e+02</td>
+<td align="right">6.31e+02</td>
+<td align="right">5.31e+03</td>
+<td align="left">▇▁▁▁▁</td>
+</tr>
+<tr class="even">
+<td align="left">rating</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">6.39e+00</td>
+<td align="right">1.05e+00</td>
+<td align="right">1.6</td>
+<td align="right">5.80e+00</td>
+<td align="right">6.50e+00</td>
+<td align="right">7.10e+00</td>
+<td align="right">9.30e+00</td>
+<td align="left">▁▁▆▇▁</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>#there are fewer unique titles than rows, so we need to take rid of duplicate entries 
+movies_cleaned &lt;-movies %&gt;% 
+  distinct(title, .keep_all = TRUE) 
+
+#we check the dataset again, to see whether issue has been corrected
+skim(movies_cleaned)</code></pre>
+<table>
+<caption><span id="tab:unnamed-chunk-1">Table 1: </span>Data summary</caption>
+<tbody>
+<tr class="odd">
+<td align="left">Name</td>
+<td align="left">movies_cleaned</td>
+</tr>
+<tr class="even">
+<td align="left">Number of rows</td>
+<td align="left">2907</td>
+</tr>
+<tr class="odd">
+<td align="left">Number of columns</td>
+<td align="left">11</td>
+</tr>
+<tr class="even">
+<td align="left">_______________________</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">Column type frequency:</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">character</td>
+<td align="left">3</td>
+</tr>
+<tr class="odd">
+<td align="left">numeric</td>
+<td align="left">8</td>
+</tr>
+<tr class="even">
+<td align="left">________________________</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">Group variables</td>
+<td align="left">None</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Variable type: character</strong></p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">skim_variable</th>
+<th align="right">n_missing</th>
+<th align="right">complete_rate</th>
+<th align="right">min</th>
+<th align="right">max</th>
+<th align="right">empty</th>
+<th align="right">n_unique</th>
+<th align="right">whitespace</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">title</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">83</td>
+<td align="right">0</td>
+<td align="right">2907</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">genre</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">5</td>
+<td align="right">11</td>
+<td align="right">0</td>
+<td align="right">17</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">director</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">3</td>
+<td align="right">32</td>
+<td align="right">0</td>
+<td align="right">1366</td>
+<td align="right">0</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Variable type: numeric</strong></p>
+<table>
+<colgroup>
+<col width="13%" />
+<col width="6%" />
+<col width="9%" />
+<col width="6%" />
+<col width="6%" />
+<col width="4%" />
+<col width="6%" />
+<col width="6%" />
+<col width="6%" />
+<col width="6%" />
+<col width="28%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">skim_variable</th>
+<th align="right">n_missing</th>
+<th align="right">complete_rate</th>
+<th align="right">mean</th>
+<th align="right">sd</th>
+<th align="right">p0</th>
+<th align="right">p25</th>
+<th align="right">p50</th>
+<th align="right">p75</th>
+<th align="right">p100</th>
+<th align="left">hist</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">year</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">2.00e+03</td>
+<td align="right">9.92e+00</td>
+<td align="right">1920.0</td>
+<td align="right">2.00e+03</td>
+<td align="right">2.00e+03</td>
+<td align="right">2.01e+03</td>
+<td align="right">2.02e+03</td>
+<td align="left">▁▁▁▂▇</td>
+</tr>
+<tr class="even">
+<td align="left">duration</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">1.10e+02</td>
+<td align="right">2.23e+01</td>
+<td align="right">37.0</td>
+<td align="right">9.50e+01</td>
+<td align="right">1.05e+02</td>
+<td align="right">1.19e+02</td>
+<td align="right">3.30e+02</td>
+<td align="left">▃▇▁▁▁</td>
+</tr>
+<tr class="odd">
+<td align="left">gross</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">5.76e+07</td>
+<td align="right">7.23e+07</td>
+<td align="right">703.0</td>
+<td align="right">1.20e+07</td>
+<td align="right">3.45e+07</td>
+<td align="right">7.51e+07</td>
+<td align="right">7.61e+08</td>
+<td align="left">▇▁▁▁▁</td>
+</tr>
+<tr class="even">
+<td align="left">budget</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">4.02e+07</td>
+<td align="right">4.32e+07</td>
+<td align="right">218.0</td>
+<td align="right">1.10e+07</td>
+<td align="right">2.50e+07</td>
+<td align="right">5.50e+07</td>
+<td align="right">3.00e+08</td>
+<td align="left">▇▂▁▁▁</td>
+</tr>
+<tr class="odd">
+<td align="left">cast_facebook_likes</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">1.23e+04</td>
+<td align="right">2.05e+04</td>
+<td align="right">0.0</td>
+<td align="right">2.22e+03</td>
+<td align="right">4.54e+03</td>
+<td align="right">1.68e+04</td>
+<td align="right">6.57e+05</td>
+<td align="left">▇▁▁▁▁</td>
+</tr>
+<tr class="even">
+<td align="left">votes</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">1.09e+05</td>
+<td align="right">1.59e+05</td>
+<td align="right">5.0</td>
+<td align="right">1.95e+04</td>
+<td align="right">5.47e+04</td>
+<td align="right">1.32e+05</td>
+<td align="right">1.69e+06</td>
+<td align="left">▇▁▁▁▁</td>
+</tr>
+<tr class="odd">
+<td align="left">reviews</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">4.98e+02</td>
+<td align="right">4.93e+02</td>
+<td align="right">2.0</td>
+<td align="right">1.97e+02</td>
+<td align="right">3.58e+02</td>
+<td align="right">6.24e+02</td>
+<td align="right">5.31e+03</td>
+<td align="left">▇▁▁▁▁</td>
+</tr>
+<tr class="even">
+<td align="left">rating</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">6.39e+00</td>
+<td align="right">1.06e+00</td>
+<td align="right">1.6</td>
+<td align="right">5.80e+00</td>
+<td align="right">6.50e+00</td>
+<td align="right">7.10e+00</td>
+<td align="right">9.30e+00</td>
+<td align="left">▁▁▆▇▁</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>#we create a new data set creating only useful rows of the two directors studied
+useful_movies&lt;-movies_cleaned %&gt;%
+  filter((director==&quot;Steven Spielberg&quot;)|(director==&quot;Tim Burton&quot;))
+
+#we use only useful data
+director_confidence_interval&lt;-useful_movies %&gt;%
+#thanks to previously filtering data we can group_by director to get useful output for both directors  
+  group_by(director)%&gt;%
+  summarise(movies=n(),
+            mean=mean(rating,na.rm=TRUE),
+            sd=sd(rating, na.rm=TRUE),
+            lower=mean-abs(qt(0.025,(movies-1)))*(sd/sqrt(movies)),
+            higher=mean+abs(qt(0.025,(movies-1)))*(sd/sqrt(movies)))
+
+director_confidence_interval</code></pre>
+<pre><code>## # A tibble: 2 x 6
+##   director         movies  mean    sd lower higher
+##   &lt;chr&gt;             &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;
+## 1 Steven Spielberg     23  7.57 0.695  7.27   7.87
+## 2 Tim Burton           14  7.05 0.708  6.64   7.46</code></pre>
+<pre class="r"><code>NULL</code></pre>
+<pre><code>## NULL</code></pre>
+<pre class="r"><code>#using table with calculations, setting order
+ggplot(director_confidence_interval, aes(x=mean, y=reorder(director,mean), colour=director))+
+   
+  #plot mean
+  geom_point(aes(size=1.4))+
+  
+  #plot confidence interval around mean
+  geom_errorbarh(aes(xmax=higher, xmin=lower),
+                     # setting width of whiskers and thickness of line
+                     width=0.08, size=1.5)+
+  
+  #adding shaded overlap
+  geom_rect(aes(xmin=7.27, xmax=7.46, ymin=-Inf, ymax=Inf), color=NA, alpha=0.2)+
+  
+  #set up titles and axes
+  labs(title=&quot;Do Spielberg and Burton have the same mean IMDB rating?&quot;, subtitle=&quot;95% confidence intervals overlap&quot;, x= &quot;Mean IMDB Rating&quot;, y= &quot;&quot; )+
+  
+  #remove legend
+  theme(legend.position=&quot;none&quot;)+
+  
+  #setting background
+  theme(strip.background = element_rect(
+     color=&quot;black&quot;, fill=&quot;white&quot;, linetype=&quot;solid&quot;), panel.background = element_rect(fill = &quot;white&quot;),panel.grid=element_line(size=0.5, colour=&quot;#F1F1EB&quot;), panel.border = element_rect(fill=NA))+
+  
+  #placing labels, adjusting decimal place, size, position and colour
+  geom_text(aes(label=round(mean, digits = 2)), size=7.5, nudge_y=0.09, colour=&quot;black&quot;)+
+  geom_text(aes(label=round(lower, digits = 2)), hjust=c(4.5,6), vjust=-1, colour=&quot;black&quot;) +
+  geom_text(aes(label=round(higher, digits = 2)),hjust=c(-3.5,-5), vjust=-1, colour=&quot;black&quot;) </code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-3-1.png" width="100%" style="display: block; margin: auto;" /></p>
+<p>We run hypothesis tests using both the <code>t.test</code> command and the <code>infer</code> package to simulate from a null distribution, where we assume zero difference between the two. For this we must first check whether the ratings of the two directors have equal variances.</p>
+<pre class="r"><code>#first we need to check whether two groups have equal variance
+rating_variance_comparison &lt;- bartlett.test(rating ~ director, 
+        data = useful_movies)
+rating_variance_comparison</code></pre>
+<pre><code>## 
+##  Bartlett test of homogeneity of variances
+## 
+## data:  rating by director
+## Bartlett&#39;s K-squared = 0.005, df = 1, p-value = 0.9</code></pre>
+<p>The p-value of 0.9 means that we cannot reject the null hypothesis of equal means and can therefore continue with hypothesis tests.</p>
+<pre class="r"><code># Getting p-value using t.test:
+
+t.test(rating~director, data=useful_movies)</code></pre>
+<pre><code>## 
+##  Welch Two Sample t-test
+## 
+## data:  rating by director
+## t = 2, df = 27, p-value = 0.04
+## alternative hypothesis: true difference in means is not equal to 0
+## 95 percent confidence interval:
+##  0.0351 1.0127
+## sample estimates:
+## mean in group Steven Spielberg       mean in group Tim Burton 
+##                           7.57                           7.05</code></pre>
+<pre class="r"><code># Getting p-value using infer:
+
+# We randomize
+set.seed(5648)
+
+ratings_in_null_world&lt;-useful_movies %&gt;%
+  
+# Specify the variable of interest
+specify(rating~director) %&gt;%
+  
+# Hypothesize a null of no (or zero) difference
+hypothesize(null = &quot;independence&quot;) %&gt;%
+  
+# Generate a bunch of simulated samples
+generate(reps=1000 , type =&quot;permute&quot;)%&gt;%
+  
+# Find the mean difference of each sample
+calculate(stat = &quot;diff in means&quot;,
+          order = c(&quot;Steven Spielberg&quot;, &quot;Tim Burton&quot;))
+
+
+#visualize how extreme would the observed results be if we simulate a hypothesized population
+ratings_in_null_world %&gt;% visualize()+
+   shade_p_value(obs_stat =0.52, direction = &quot;both&quot;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-5-1.png" width="648" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>#Calculate a p-value
+ratings_in_null_world %&gt;%
+  get_pvalue(obs_stat=0.52, direction = &quot;both&quot;)</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   p_value
+##     &lt;dbl&gt;
+## 1   0.028</code></pre>
+<p>Before anything, we write down the null and alternative hypotheses, as well as the resulting test statistic and the associated t-stat or p-value.</p>
+<blockquote>
+<p>Answer:
+Critical p-value = 0.05
+Null hypothesis: Spielberg mean IMBD rating - Burton mean IMBD rating = 0 ; p-value is equal to or greater than 0.05
+Alternative hypothesis: Difference != 0 ; p-vlaue is smaller than 0.05
+p-stat using t.test= 0.04
+p-stat using simulated null distribution= 0.054</p>
+</blockquote>
+<p>At the end of the day, what do you conclude?</p>
+<blockquote>
+<p>Conclusion
+We can see that the observed difference of 0.52 is extreme on the simulatio-based null distribution. We can also see that under the 95% confidence interval for the difference, 0.0351 to 1.0127 does not include zero. The infer test and t.test give p-values of 0.028 and 0.04 respectively. There is a 2.8% probabilty that our randomly generated samples from a population with mean difference zero would produce the observed difference. There is a 4% chance of encountering the observed difference if the true difference was zero. Both these p-values are smaller than the 0.05 critical p-value. At the 95% confidence level We can therefore reject the null hypothesis of Spielberg and Burton having same ratings. Given that out observed difference is positive, we can also conclude with 95% confidence that Spielberg has higher ratings than Burton.</p>
+</blockquote>
+</div>
+<div id="which-directors-achieve-greatest-returns" class="section level2">
+<h2>Which directors achieve greatest returns?</h2>
+<p>Sure, movie ratings may be interesting, but I believe that what matters most to studios is how much money a movie can generate relative to its budget. Let’s look at which directors generate the most consistent returns.</p>
+<pre class="r"><code>#creating new variable return_on_budget
+movies_cleaned &lt;- movies_cleaned %&gt;%
+  mutate(
+    return_on_budget = ((gross-budget)/budget)
+    )</code></pre>
+<p>Studios are probably risk averse and will want a director who has proved themselves, we therefore filter for directors who have at least 8 movies in the dataset.</p>
+<pre class="r"><code>director10 &lt;- movies_cleaned %&gt;% 
+  group_by(director) %&gt;% 
+  summarise(
+    N = n()
+  ) %&gt;% 
+  filter(
+    N &gt;= 10
+  )
+
+director10_movies &lt;- movies_cleaned %&gt;% 
+  filter(
+    director %in% director10$director
+  )</code></pre>
+<p>We create confidence intervals for directors</p>
+<pre class="r"><code>#we use only useful data
+director_returns_confidence_interval&lt;-director10_movies %&gt;%
+#thanks to previously filtering data we can group_by director to get useful output for both directors  
+  group_by(director) %&gt;%
+  summarise(movies=n(),
+            mean = mean(return_on_budget,na.rm=TRUE),
+            sd=sd(return_on_budget, na.rm=TRUE),
+            lower=mean-abs(qt(0.025,(movies-1)))*(sd/sqrt(movies)),
+            higher=mean+abs(qt(0.025,(movies-1)))*(sd/sqrt(movies)))
+
+director_returns_confidence_interval</code></pre>
+<pre><code>## # A tibble: 22 x 6
+##    director          movies    mean     sd  lower higher
+##    &lt;chr&gt;              &lt;int&gt;   &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;
+##  1 Barry Levinson        13  1.18    2.90  -0.574  2.93 
+##  2 Clint Eastwood        19  1.30    2.14   0.270  2.33 
+##  3 David Fincher         10  0.535   0.931 -0.131  1.20 
+##  4 Kevin Smith           10  6.52   14.8   -4.06  17.1  
+##  5 Martin Scorsese       16  0.122   0.964 -0.392  0.636
+##  6 Michael Bay           12  0.629   0.777  0.135  1.12 
+##  7 Oliver Stone          10  0.529   1.40  -0.473  1.53 
+##  8 Renny Harlin          14  0.146   1.76  -0.873  1.16 
+##  9 Richard Linklater     10  6.31   16.3   -5.33  17.9  
+## 10 Ridley Scott          14 -0.0388  0.580 -0.374  0.296
+## # ... with 12 more rows</code></pre>
+<pre class="r"><code>#using table with calculations, setting order
+ggplot(director_returns_confidence_interval, aes(x=mean, y=reorder(director,mean), colour=director))+
+   
+  #plot mean
+  geom_point(aes(size=1.4))+
+  
+  #plot confidence interval around mean
+  geom_errorbarh(aes(xmax=higher, xmin=lower),
+                     # setting width of whiskers and thickness of line
+                     width=0.08, size=1.5)+
+  
+  
+  #set up titles and axes
+  labs(title=&quot;Which director delivers the highest and safest return?&quot;, subtitle=&quot;95% confidence intervals for director returns&quot;, x= &quot;Return on budget&quot;, y= &quot;&quot; )+
+  
+  #remove legend
+  theme(legend.position=&quot;none&quot;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-9-1.png" width="648" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>#Let&#39;s create another graph excluding Robert Rodriquez, clearly there might be some problem with data or he&#39;s too risky
+director_returns_without_Rodrigues&lt;-director_returns_confidence_interval%&gt;%
+  filter(director!=&quot;Robert Rodriguez&quot;)
+
+ggplot(director_returns_without_Rodrigues, aes(x=mean, y=reorder(director,mean), colour=director))+
+   
+  #plot mean
+  geom_point(aes(size=1.4))+
+  
+  #plot confidence interval around mean
+  geom_errorbarh(aes(xmax=higher, xmin=lower),
+                     # setting width of whiskers and thickness of line
+                     width=0.08, size=1.5)+
+  
+  
+  #set up titles and axes
+  labs(title=&quot;Which director delivers the highest and safest return?&quot;, subtitle=&quot;95% confidence intervals for director returns&quot;, x= &quot;Return on budget&quot;, y= &quot;&quot; )+
+  
+  #remove legend
+  theme(legend.position=&quot;none&quot;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-9-2.png" width="648" style="display: block; margin: auto;" /></p>
+<p>It is very interesting to see how the return on budget of directors behaves similarly as securities in an efficient financial market, the greater the risk, the greater the expected reward. It’s almost like the directors with high expected average returns direct movies in a way that people either love it or hate it.</p>
+<p>This does not help studios to make decisions easily. Let’s calculate “Sharpe ratios” for directors to help them.</p>
+<pre class="r"><code>director_returns_confidence_interval &lt;- director_returns_confidence_interval%&gt;%
+  mutate(Sharpe_Ratio=mean/sd)
+  
+ggplot(director_returns_confidence_interval, aes(x=Sharpe_Ratio, y=reorder(director,Sharpe_Ratio)))+
+  geom_col()+
+  labs(title=&quot;Sharpe ratios of Directors&quot;,
+       x=&quot;Sharpe Ratio&quot;,
+       y=&quot;&quot;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-10-1.png" width="648" style="display: block; margin: auto;" />
+As we can see, risk averse studios should look for Shawn Levy or Michael Bay for directinf their movies. Of course, only if the dataset is correct, which is questionable given the negative Sharpe Ratio of Ridley Scott who had some AMAZING movies, which surely on average were profitable.</p>
+</div>
+</div>
