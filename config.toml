@@ -112,7 +112,7 @@ disqusShortname = ""
     [[params.tiles.showcase]]
       title = "Happiness globally"
       subtitle = "What are the drivers of a country's happiness?"
-      image = "HappinessAnalysis_image"
+      image = "HappinessAnalysis_image.jpg"
       url = "projects/happiness"
 
   # Contact section
