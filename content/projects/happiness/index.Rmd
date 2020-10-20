@@ -1,7 +1,7 @@
 ---
 title: "HappinessAnalysis"
 author: "TomasVarga"
-slug: project1
+slug: happiness
 date: "10/20/2020"
 output: html_document
 ---
