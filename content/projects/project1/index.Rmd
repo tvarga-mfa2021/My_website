@@ -1,0 +1,115 @@
+---
+title: "HappinessAnalysis"
+author: "TomasVarga"
+date: "10/20/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(maps)
+library(ggplot2)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(sf)
+library(scales)
+library(countrycode)
+
+data <- read.csv("C:/Users/Nandi/Desktop/My_website/content/projects/project1/2017HappinessAnalysis.csv", sep=",")
+
+```
+
+```{r}
+glimpse(data)
+```
+# Happiness around the world
+
+I always enjoyed geography and comparing countries on various metrics. The most interesting metric might be happiness which itself depends on many other variables. I used the world happiness dataset from Kaggle to analyse the connection between happiness and various factors around the world.
+
+For more information check out the original dataset: https://www.kaggle.com/unsdsn/world-happiness
+
+## Family and happiness
+
+```{r}
+#We create histograms for each continent's happiness based on family score in countries
+data %>% 
+  mutate(
+    continent = countrycode(Country, 'country.name', 'continent')
+  ) %>% 
+  group_by(continent) %>% 
+  summarise(
+    Family = Family,
+    mean_fam = mean(Family)
+  ) %>% 
+  na.omit() %>% 
+  ggplot(aes(x=Family)) +
+  geom_histogram() +
+  facet_wrap(~continent, scales="fixed", ncol=1) +
+  theme_bw() +
+  labs(title="Family plays a crucial role in people's happiness",
+       subtitle = "Family score across regions") +
+  ylab("") +
+  xlab("How important is family for your happiness?")
+```
+
+## Wealth and happiness
+
+```{r}
+#We create scatterplot with trendline to study relationship
+data %>% 
+  ggplot(aes(x=Economy..GDP.per.Capita., y=Happiness.Score)) +
+  geom_point() +
+  geom_smooth(method="lm",se=FALSE)+
+  theme_bw() +
+  labs(title = "Wealthier contries are happier",
+       subtitle="Visible trend between happiness and GDP per capita") +
+  ylab("Happiness score") +
+  xlab("GDP per capita proxy")
+```
+
+##How does happiness look like on a map?
+
+```{r}
+#We create world map with countries coloured based on happiness score
+
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+#rename countries so that they match
+world$sovereignt <- gsub("United States of America", "United States", world$sovereignt)
+
+#we merge data and want to keep all countries on map (hence last part of line)
+world <- merge(world, data, by.x = "sovereignt", by.y = "Country", all.x = T)
+
+ggplot(data = world) +
+  geom_sf(aes(fill = Happiness.Score), lwd = 0) +
+  scale_fill_gradient(low=rgb(253, 241, 240, maxColorValue = 255), high=rgb(224, 56, 56, maxColorValue = 255),
+                      limits = c(3, 7), na.value = rgb(223, 230, 233, maxColorValue = 255), oob=squish) +
+  theme_minimal() +
+  labs(fill = "Happy") +
+  theme(plot.margin = unit(c(.05,.05,.05,.05), "lines")) +
+  labs(title ="More developed countries scored higher",
+       subtitle="Happiness score around the world")
+```
+
+## Modelling Happiness
+```{r}
+
+Happiness_model<-lm(Happiness.Score~Family +
+     Health..Life.Expectancy. + 
+     Economy..GDP.per.Capita.+ 
+     Freedom+
+     Generosity+
+     Trust..Government.Corruption.
+    ,
+       
+   data=data)
+
+Happiness_model%>%broom::tidy()
+Happiness_model%>%broom::glance() 
+
+Happiness_model
+
+```
+We can see that proxies for health, wealth, freedom, generosity and trust in government all positively influence the happiness of a country and altogether explain 80.5% of the variation in happiness.
