@@ -94,25 +94,25 @@ disqusShortname = ""
     [[params.tiles.showcase]]
       title = "My Resume"
       subtitle = "Gain an insight into my background"
-      image = "pic01.jpg"
+      image = "Resume_image.jpg"
       url = "blogs/aliquam"
 
     [[params.tiles.showcase]]
-      title = "Social Media Usage"
-      subtitle = "How do peole connect?"
-      image = "pic02.jpg"
-      url = "blogs/tempus"
+      title = "It's getting hot in here"
+      subtitle = "Analysis of temperature deviations"
+      image = "GlobalTemperatures.jpg"
+      url = "projects/globalwarming"
 
     [[params.tiles.showcase]]
       title = "Blockbusters"
-      subtitle = "Do some directors achieve better IMDB ratings than others? "
+      subtitle = "Which directors deliver best returns? "
       image = "Director_image.jpg"
       url = "projects/blockbusters"
 
     [[params.tiles.showcase]]
       title = "Happiness globally"
       subtitle = "What are the drivers of a country's happiness?"
-      image = "pic04.jpg"
+      image = "HappinessAnalysis_image"
       url = "projects/happiness"
 
     # You can make more showcases by copy and pasting the code above

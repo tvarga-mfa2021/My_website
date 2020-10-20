@@ -1,0 +1,213 @@
+---
+title: "Session 4: Homework 2"
+author: "Group B30"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    theme: flatly
+    highlight: zenburn
+    number_sections: yes
+    toc: yes
+    toc_float: yes
+    code_folding: show
+---
+
+
+```{r, setup, include=FALSE}
+knitr::opts_chunk$set(
+  message = FALSE, 
+  warning = FALSE, 
+  tidy=FALSE,     # display code as typed
+  size="small")   # slightly smaller font for code
+options(digits = 3)
+
+# default figure size
+knitr::opts_chunk$set(
+  fig.width=6.75, 
+  fig.height=6.75,
+  fig.align = "center"
+)
+```
+
+
+```{r load-libraries, include=FALSE}
+library(tidyverse)  # Load ggplot2, dplyr, and all the other tidyverse packages
+library(mosaic)
+library(ggthemes)
+library(lubridate)
+library(here)
+library(skimr)
+library(janitor)
+library(httr)
+library(readxl)
+library(vroom)
+```
+
+# Climate change and temperature anomalies 
+
+Data: 
+*Combined Land-Surface Air and Sea-Surface Water Temperature Anomalies* in the Northern Hemisphere at [NASA's Goddard Institute for Space Studies](https://data.giss.nasa.gov/gistemp). The [tabular data of temperature anomalies can be found here](https://data.giss.nasa.gov/gistemp/tabledata_v3/NH.Ts+dSST.txt)
+
+To define temperature anomalies you need to have a reference, or base, period which NASA clearly states that it is the period between 1951-1980.
+
+Run the code below to load the file:
+
+```{r weather_data, cache=TRUE}
+
+weather <- 
+  read_csv("https://data.giss.nasa.gov/gistemp/tabledata_v3/NH.Ts+dSST.csv", 
+           skip = 1, 
+           na = "***")
+
+```
+
+Notice that, when using this function, we added two options: `skip` and `na`.
+
+The `skip=1` option is there as the real data table only starts in Row 2, so we need to skip one row. 
+
+`na = "***"` option informs R how missing observations in the spreadsheet are coded. When looking at the spreadsheet, you can see that missing data is coded as "***". It is best to specify this here, as otherwise some of the data is not recognized as numeric data.
+
+We select the year and the twelve month variables from the `weather` dataset and convert the dataframe from wide to 'long' format, naming new dataframe as `tidyweather`, and variable containing the name of the month as `month`, and the temperature deviation values as `delta`.
+
+
+```{r tidyweather}
+weather_cleaned <- weather %>% select(1:13)
+tidyweather <- weather_cleaned %>%
+  pivot_longer(cols=2:13,names_to="month",values_to="delta")
+```
+
+## Plotting Information
+
+Let us plot the data using a time-series scatter plot, and add a trendline. To do that, we first need to create a new variable called `date` in order to ensure that the `delta` values are plot chronologically. 
+
+```{r scatter_plot}
+
+tidyweather <- tidyweather %>%
+  mutate(date = ymd(paste(as.character(Year),month, "1")),
+         month = month(date, label=TRUE),
+         year = year(date))
+
+ggplot(tidyweather, aes(x=date, y = delta))+
+  geom_point(se=FALSE)+
+  geom_smooth(color="red") +
+  theme_bw() +
+  labs (title = "Temperatures have become increasingly warmer than norm", y="Deviation from norm [°C]", x="Date")
+
+
+```
+
+Is the effect of increasing temperature more pronounced in some months?
+
+```{r facet_wrap, echo=FALSE}
+
+ggplot(tidyweather, aes(x= Year, y = delta))+
+  geom_point()+
+  geom_smooth(color="red") +
+  facet_wrap(~month) +
+  theme_bw() +
+  labs (title = "Temperature increase anomaly is present across all months", x= "Year" , y = "Deviation from norm [°C]")
+
+```
+
+We remove data before 1800 and before using `filter`. Then, we use the `mutate` function to create a new variable `interval` which contains information on which period each observation belongs to. We can assign the different periods using `case_when()`.
+
+
+```{r intervals}
+
+comparison <- tidyweather %>% 
+  filter(Year>= 1881) %>%     #remove years prior to 1881
+  #create new variable 'interval', and assign values based on criteria below:
+  mutate(interval = case_when(
+    Year %in% c(1881:1920) ~ "1881-1920",
+    Year %in% c(1921:1950) ~ "1921-1950",
+    Year %in% c(1951:1980) ~ "1951-1980",
+    Year %in% c(1981:2010) ~ "1981-2010",
+    TRUE ~ "2011-present"
+  ))
+
+```
+
+Inspect the `comparison` dataframe by clicking on it in the `Environment` pane.
+
+Now that we have the `interval` variable, we can create a density plot to study the distribution of monthly deviations (`delta`), grouped by the different time periods we are interested in. Set `fill` to `interval` to group and colour the data by different time periods.
+
+```{r density_plot}
+
+ggplot(comparison, aes(x=delta, fill=interval))+
+  geom_density(alpha=0.2) +  
+  theme_bw() +               
+  labs (
+    title= "Shift from colder to increasingly warmer than expected temperatures",
+    subtitle = "Monthly Temperature Anomalies",
+    x = "Deviation from norm [°C]",
+    y     = "Density"         #changing y-axis label to sentence case
+  )
+
+```
+
+So far, we have been working with monthly anomalies. However, we might be interested in average annual anomalies. We can do this by using `group_by()` and `summarise()`, followed by a scatter plot to display the result. 
+
+```{r averaging}
+
+#creating yearly averages
+average_annual_anomaly <- tidyweather %>% 
+  group_by(Year) %>%   #grouping data by Year
+  
+  # creating summaries for mean delta 
+  # use `na.rm=TRUE` to eliminate NA (not available) values 
+  summarise(annual_average_delta = mean(delta, na.rm=TRUE)) 
+
+#plotting the data:
+ggplot(average_annual_anomaly, aes(x=Year, y= annual_average_delta))+
+  geom_point()+
+  
+  #Fit the best fit line, using LOESS method
+  geom_smooth(method="loess") +
+  
+  #change to theme_bw() to have white background + black frame around plot
+  theme_bw() +
+  labs (
+    title="Increasingly warmer temperatures than expected",
+    subtitle = "Average Yearly Anomaly",
+    y     = "Annual Average Deviation from norm [°C]")                         
+
+
+
+```
+
+
+## Confidence Interval for `delta`
+
+>NASA points out on their [website](https://earthobservatory.nasa.gov/world-of-change/decadaltemp.php) that a one-degree global change is significant because it takes a vast amount of heat to warm all the oceans, atmosphere, and land by that much. In the past, a one- to two-degree drop was all it took to plunge the Earth into the Little Ice Age.
+
+We construct a confidence interval for the average annual delta since 2011, both using a formula and using a bootstrap simulation. 
+
+```{r, calculate_CI_using_formula}
+
+formula_CI <- comparison %>% filter(interval=="2011-present")%>%
+  summarise(mean_delta=mean(delta,na.rm=TRUE),
+            sd_delta=sd(delta,na.rm=TRUE),
+            count=n(),
+            se=sd_delta/sqrt(count),
+            upper_95=mean_delta+1.96*se,
+            lower_95=mean_delta-1.96*se)
+
+formula_CI
+
+```
+
+
+```{r, calculate_CI_using_bootstrap}
+
+library (infer)
+boot_delta <-comparison %>% filter(interval=="2011-present") %>%
+specify(response=delta) %>%
+  generate (reps=100,type="bootstrap") %>% 
+  calculate(stat="mean")
+percentile_ci <- boot_delta %>% get_confidence_interval(level=0.95,type="percentile")
+percentile_ci
+
+```
+
+>By looking at the weather annual anomalies graph and the annual anomalies graph faceted by month, we can see a upward trend of delta. Despite there were some cycles and downward trend before 1970s, the trend line is a positive-slope line, surpassing 1 at present. And then by looking at the density plot, we can see the plots are all normal distribution but there is rightward trend of the plot of different time periods, which demonstrates the increasing trend of the mean of delta. Lastly, when we calculate the confidence interval for average annual delta since 2011, we are 95% confident that the average annual delta falls within the range between 0.922 and 1.01. Based on those fildings, we can conclude that the temperature deviation(delta)is greater than 0, thus there is evidence of global warming. And the temperature is also likely keeps increasing in the future. 
+
