@@ -17,13 +17,9 @@ library(sf)
 library(scales)
 library(countrycode)
 
-data <- read.csv("C:/Users/Nandi/Desktop/My_website/content/projects/project1/2017HappinessAnalysis.csv", sep=",")
-
+data <- read.csv("2017HappinessAnalysis.csv", sep=",")
 ```
 
-```{r}
-glimpse(data)
-```
 # Happiness around the world
 
 I always enjoyed geography and comparing countries on various metrics. The most interesting metric might be happiness which itself depends on many other variables. I used the world happiness dataset from Kaggle to analyse the connection between happiness and various factors around the world.
